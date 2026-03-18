@@ -1,0 +1,19 @@
+services:
+  api:
+    build:
+      context: ./api
+    ports:
+      - "8010:8010"
+    env_file:
+      - ./api/.env
+    volumes:
+      - ./api/.env:/app/.env:ro
+
+  app:
+    build:
+      context: ../../
+      dockerfile: examples/basic-app/Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api

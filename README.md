@@ -140,7 +140,7 @@ registry.requiresConfirmation('name');  // check confirm flag
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `fetchCompletion` | `(req) => Promise` | **required** | Send completion request to LLM backend. |
-| `provider` | `'openai' \| 'anthropic'` | `'openai'` | Response format to parse. |
+| `provider` | `'openai' \| 'anthropic' \| ProviderAdapter` | `'openai'` | Response format, or a custom adapter instance. |
 | `defaultModel` | `string` | `''` | Default model ID. |
 | `fetchModels` | `() => Promise<ModelInfo[]>` | — | Fetch available models. |
 | `buildContext` | `() => Record` | — | Extra context merged into each request. |
@@ -153,19 +153,50 @@ registry.requiresConfirmation('name');  // check confirm flag
 | `onError` | `(error) => void` | — | Error callback. |
 | `onToolExecute` | `(name, params, result) => void` | — | Tool execution callback. |
 
-## Example Backend
+## Example App
 
-See `examples/basic-app/api/` for a minimal FastAPI backend that proxies to OpenAI/Anthropic with tool support.
+See [`examples/basic-app/`](examples/basic-app/) for a full working example with:
+
+- **FastAPI backend** — proxies to OpenAI/Anthropic, format converters, auth placeholder
+- **React frontend** — Zustand store as `toolContext`, 6 registered tools, notes CRUD
+- **Docker Compose** — containerized API
 
 ```bash
-# Start the backend
+# 1. Start the API
 cd examples/basic-app/api
-pip install -r requirements.txt
-OPENAI_API_KEY=sk-... uvicorn main:app --port 8010
+cp .env.example .env        # add your API keys
+uv pip install -r requirements.txt
+uvicorn main:app --port 8010 --reload
 
-# Start the frontend
+# 2. Start the frontend
 cd examples/basic-app
 npm install && npm run dev
+```
+
+Or with Docker:
+
+```bash
+cd examples/basic-app
+OPENAI_API_KEY=sk-... docker compose up api
+```
+
+## Custom Provider Adapter
+
+You can pass a custom `ProviderAdapter` instance for non-standard backends:
+
+```ts
+import { BaseProviderAdapter } from '@quantumwake/react-assistant';
+
+class MyAdapter extends BaseProviderAdapter {
+    parseResponse(response) { /* ... */ }
+    formatToolResults(results) { /* ... */ }
+    formatAssistantToolCallMessage(content, toolCalls) { /* ... */ }
+}
+
+const config: AssistantConfig = {
+    provider: new MyAdapter(),
+    // ...
+};
 ```
 
 ## License
